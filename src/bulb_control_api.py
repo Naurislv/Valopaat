@@ -15,7 +15,7 @@ LOGLEVEL_BulbControl = logging.INFO
 
 class BulbControl(object):
     def __init__(self, name="BulbControl"):
-        self.bulb_id            = 8
+        self.bulb_id            = 0
         self.brightness         = 150
         self.params             = {}
         self._loop              = None
