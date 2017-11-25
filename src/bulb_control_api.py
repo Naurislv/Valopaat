@@ -1,7 +1,6 @@
 #!/usr/bin/python3.5
 
-import asyncio
-import aiohttp
+import requests
 import json
 import logging
 import time
@@ -20,7 +19,6 @@ class BulbControl(object):
         self.params             = {}
         self._loop              = None
         self.template_url       = ""
-        self.buld_id_set        = [0,3,8]
         self._logger            = logging.getLogger(name)
         self._logger.setLevel(LOGLEVEL_BulbControl)
         self._logger.info("Initiating BulbControl API")
@@ -35,20 +33,9 @@ class BulbControl(object):
         
     def set_url_template(self, url_template=""):
         if url_template=="":
-            url_template = "https://5nk8a0rfn5.execute-api.eu-west-1.amazonaws.com/v1/command?"
+            url_template = "https://5nk8a0rfn5.execute-api.eu-west-1.amazonaws.com/v1/command?device={}&level={}&colour_x={}&colour_y={}"
             
         self.template_url = url_template
-
-    def _connect(self):
-        try:
-            tcp_conn             = aiohttp.TCPConnector(loop=self._loop)
-            self.control_session = aiohttp.ClientSession(connector=tcp_conn)
-        except Exception as ex:
-            self._logger.error("Failure initiating the bulb control client")
-            self._logger.error(ex)
-
-    def close(self):
-        self.control_session.close()
 
     def set_bulb_id(self, id):
         self.bulb_id = id
@@ -59,31 +46,10 @@ class BulbControl(object):
             return True
         return False
         
-    @asyncio.coroutine
-    def get(self, params=None, timeout=2):
-        with aiohttp.Timeout(timeout):
-            resp = None                                     # To handles issues related to connectivity with url
-            try:
-                resp = yield from self.control_session.get(self.template_url, params=params) 
-                bulb_resp = yield from resp.text()
-                print(bulb_resp)
-                return bulb_resp
-                
-            except Exception as ex:
-                # .close() on exception.
-                if resp!=None:
-                    resp.close()
-                self._logger.error(ex)
-            finally:
-                if resp!=None:
-                    yield from resp.release()               # .release() - returns connection into free connection pool.
+    def _get(self, url):
+        r = requests.get(url)
 
-    def execute_controls(self, control):
-        self._loop = asyncio.get_event_loop()
-        self._connect()
-        self.execute_control(control)
-    
-    def execute_control(self, control):
+    def _execute_control(self, control):
         try:
             if control=="random":
                 x = random.uniform(0, 0.7) * 2**16
@@ -92,7 +58,8 @@ class BulbControl(object):
                 bulb_id = self.buld_id_set[index]
                 brightness = random.randint(50,255)
                 params = {"device": bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
-                self._loop.run_until_complete(self.get(params=params))
+                url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+                self._get(url)
 
             elif control=="random-fixedBulb":
                 index = random.randint(0, len(self.color_profiles)-1)
@@ -104,12 +71,13 @@ class BulbControl(object):
                 y = int(y * 2**16)
                 brightness = random.randint(100,255)
                 params = {"device": self.bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
-                self._loop.run_until_complete(self.get(params=params))
+                url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+                self._get(url)
 
             elif control=="random-knownColors":
                 index = random.randint(0, len(self.color_profiles)-1)
                 key = self.color_proile_keys[index]
-                # print("Choosen color profile: ", key)
+                #print("Choosen color profile: ", key)
                 xy_coord = self.color_profiles[key]
                 (x, y) = xy_coord
                 x = int(x * 2**16)
@@ -118,93 +86,77 @@ class BulbControl(object):
                 bulb_id = self.buld_id_set[index]
                 brightness = random.randint(100,255)
                 params = {"device": bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
-                self._loop.run_until_complete(self.get(params=params))
-
-            elif control=="red":
-                self._loop.run_until_complete(self.execute_color_red())
-            elif control=="green":
-                self._loop.run_until_complete(self.execute_color_green())
+                url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+                self._get(url)
+            
+            if control=="red":
+                self.execute_color_red()
             elif control=="blue":
-                self._loop.run_until_complete(self.execute_color_blue())
+                self.execute_color_blue()
             elif control=="white":
-                self._loop.run_until_complete(self.execute_color_white())
+                self.execute_color_white()
             elif control=="green":
-                self._loop.run_until_complete(self.execute_color_green())
+                self.execute_color_green()
             elif control=="on":
-                self._loop.run_until_complete(self.turn_on())
+                self.turn_on()
             elif control=="off":
-                self._loop.run_until_complete(self.turn_off())
+                self.turn_off()
         except Exception as ex:
             print(ex)
-        finally:
-            self.close()
-            self._loop.close()
 
-    @asyncio.coroutine                
     def execute_color_red(self):
         params = {}
         params["device"] = self.bulb_id           # 0,3,8
         params["level"] = self.brightness                     # 0-255        brightness
         params["colour_x"] = 1900000              # 0-1931
         params["colour_y"] = 1900000              # 0-1931
-        yield from self.get(params)
+        url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+        self._get(url)
 
-    @asyncio.coroutine                
     def execute_color_green(self):
         params = {}
         params["device"] = self.bulb_id           # 0,3,8
         params["level"] = self.brightness                     # 0-255        brightness
-        params["colour_x"] = 6000              # 0-1931
-        params["colour_y"] = 52000              # 0-1931
-        yield from self.get(params)
+        params["colour_x"] = 1900              # 0-1931
+        params["colour_y"] = 1900              # 0-1931
+        url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+        self._get(url)
 
-    @asyncio.coroutine                
     def execute_color_white(self):
         params = {}
         params["device"] = self.bulb_id            # 0,3,8
         params["level"] = self.brightness              # 0-255        brightness
         params["colour_x"] = 19000              # 0-1931
         params["colour_y"] = 19000              # 0-1931
-        yield from self.get(params)
+        url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+        self._get(url)
 
-    @asyncio.coroutine                
     def execute_color_blue(self):
         params = {}
         params["device"] = self.bulb_id            # 0,3,8
         params["level"] = self.brightness              # 0-255        brightness
         params["colour_x"] = 190              # 0-1931
         params["colour_y"] = 190              # 0-1931
-        yield from self.get(params)
+        url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+        self._get(url)
 
-    @asyncio.coroutine                
     def turn_off(self):
         params = {}
         params["device"] = self.bulb_id            # 0,3,8
         params["level"] = 0              # 0-255        brightness
         params["colour_x"] = 0              # 0-1931
         params["colour_y"] = 0              # 0-1931
-        yield from self.get(params)
+        url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
+        self._get(url)
 
-    @asyncio.coroutine                
     def turn_on(self):
-        yield from self.execute_color_white()
+        self.execute_color_white()
 
 if __name__ == '__main__':
     bc = BulbControl()
-    #bc.execute_controls("blue")
-
-    import time
-
-    bc.execute_controls("random-fixedBulb")
+    bc._execute_control("random-fixedBulb")
     time.sleep(2)
-
-    bc.execute_controls("random-fixedBulb")
+    bc._execute_control("random-fixedBulb")
     time.sleep(2)
-
-    bc.execute_controls("random-fixedBulb")
+    bc._execute_control("random-fixedBulb")
     time.sleep(2)
-
-    bc.execute_controls("random-fixedBulb")
-    time.sleep(2)
-
-    
