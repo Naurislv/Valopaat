@@ -16,11 +16,13 @@ import cv2
 
 # Local imports
 from bulb_control_api import BulbControl
+from detect_hands import HandDetector
 
 # pylint: disable=E1101
 
 def motion_detection(frame, avg):
     """Detect motion based on parameters in conf.json"""
+    timestamp = datetime.datetime.now()
     text = "Still"
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -30,7 +32,7 @@ def motion_detection(frame, avg):
     if avg is None:
         print("[INFO] starting background model...")
         avg = gray.copy().astype("float")
-        return frame
+        return frame, avg, text
 
     # accumulate the weighted average between the current frame and
     # previous frames, then compute the difference between the current
@@ -60,10 +62,19 @@ def motion_detection(frame, avg):
 
         # compute the bounding box for the contour, draw it on the frame,
         # and update the text
-        (x_cnt, y_cnt, w_cnt, h_cnt) = cv2.boundingRect(c)
-        cv2.rectangle(frame, (x_cnt, y_cnt),
-                      (x_cnt + w_cnt, y_cnt + h_cnt), (0, 255, 0), 2)
+
+        if CONFIG['draw_motion_rectangles']:
+            (x_cnt, y_cnt, w_cnt, h_cnt) = cv2.boundingRect(cnt)
+            cv2.rectangle(frame, (x_cnt, y_cnt),
+                          (x_cnt + w_cnt, y_cnt + h_cnt), (0, 255, 0), 2)
         text = "Moving"
+
+    # draw the text and timestamp on the frame
+    t_s = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
+    cv2.putText(frame, "Status: {}".format(text), (10, 20),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+    cv2.putText(frame, t_s, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                0.35, (0, 0, 255), 1)
 
     return frame, avg, text
 
@@ -71,6 +82,7 @@ def main():
     """Run programs main loop."""
 
     bulb_control = BulbControl()
+    hand_detector = HandDetector()
 
     # initialize the camera and grab a reference to the raw camera capture
     # video_capture = cv2.VideoCapture('/dev/video0')
@@ -81,48 +93,23 @@ def main():
     print("[INFO] warming up...")
     time.sleep(CONFIG["camera_warmup_time"])
     avg = None
-    last_uploaded = datetime.datetime.now()
-    motion_counter = 0
 
     # capture frames from the camera
     while True:
         # grab the raw NumPy array representing the image and initialize
         # the timestamp and occupied/unoccupied text
         _, frame = video_capture.read()
-        timestamp = datetime.datetime.now()
 
         # resize the frame, convert it to grayscale, and blur it
-        frame = imutils.resize(frame, width=500)
+        frame = imutils.resize(frame, width=CONFIG['image_width'])
         frame, avg, text = motion_detection(frame, avg)
 
-        # draw the text and timestamp on the frame
-        t_s = timestamp.strftime("%A %d %B %Y %I:%M:%S%p")
-        cv2.putText(frame, "Status: {}".format(text), (10, 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-        cv2.putText(frame, t_s, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.35, (0, 0, 255), 1)
-
         # check to see if the room is occupied
-        if text == "Occupied":
-            # check to see if enough time has passed between uploads
-            if (timestamp - last_uploaded).seconds >= CONFIG["min_upload_seconds"]:
-                # increment the motion counter
-                motion_counter += 1
-
-                # check to see if the number of frames with consistent motion is
-                # high enough
-                if motion_counter >= CONFIG["min_motion_frames"]:
-                    path = timestamp.strftime("%b-%d_%H_%M_%S" + ".jpg")
-                    cv2.imwrite(path, frame)
-
-                    last_uploaded = timestamp
-                    motion_counter = 0
-
-                    bulb_control.execute_controls("green")
-
-        # otherwise, the room is not occupied
-        else:
-            motion_counter = 0
+        if text == "Moving":
+            print('DETECTING HANDS', frame.shape)
+            frame = hand_detector.run_with_boxes(frame, CONFIG['class_probability'])
+            bulb_control.set_bulb_id('random')
+            bulb_control.execute_controls('random')
 
         # check to see if the frames should be displayed to screen
         if CONFIG["show_video"]:
