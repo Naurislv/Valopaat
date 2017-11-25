@@ -76,6 +76,7 @@ class BulbControl(object):
     
     def execute_control(self, control):
         try:
+
             if control=="red":
                 self._loop.run_until_complete(self.execute_color_red())
             elif control=="blue":

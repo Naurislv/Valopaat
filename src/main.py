@@ -14,6 +14,9 @@ import time
 import imutils
 import cv2
 
+# Local imports
+from bulb_control_api import BulbControl
+
 # pylint: disable=E1101
 
 def motion_detection(frame, avg):
@@ -67,6 +70,8 @@ def motion_detection(frame, avg):
 def main():
     """Run programs main loop."""
 
+    bulb_control = BulbControl()
+
     # initialize the camera and grab a reference to the raw camera capture
     # video_capture = cv2.VideoCapture('/dev/video0')
     video_capture = cv2.VideoCapture(0)
@@ -112,6 +117,8 @@ def main():
 
                     last_uploaded = timestamp
                     motion_counter = 0
+
+                    bulb_control.execute_controls("green")
 
         # otherwise, the room is not occupied
         else:
