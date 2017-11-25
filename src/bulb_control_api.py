@@ -15,15 +15,23 @@ LOGLEVEL_BulbControl = logging.INFO
 
 class BulbControl(object):
     def __init__(self, name="BulbControl"):
-        self.bulb_id            = 0
+        self.bulb_id            = 8
         self.brightness         = 150
         self.params             = {}
         self._loop              = None
         self.template_url       = ""
+        self.buld_id_set        = [0,3,8]
         self._logger            = logging.getLogger(name)
         self._logger.setLevel(LOGLEVEL_BulbControl)
         self._logger.info("Initiating BulbControl API")
+        self._initialize()
+
+    def _initialize(self):
         self.set_url_template()
+        self.color_profiles = {"red":(0.63, 0.3), "blue":(0.1, 0.2), "green": (0.18, 0.70), "white":(0.3, 0.3), \
+                               "pink":(0.48, 0.23), "purple":(0.32, 0.1), "yellow":(0.42, 0.50), "orange":(0.42, 0.42)}
+        
+        self.color_proile_keys = list(self.color_profiles.keys())
         
     def set_url_template(self, url_template=""):
         if url_template=="":
@@ -58,8 +66,9 @@ class BulbControl(object):
             try:
                 resp = yield from self.control_session.get(self.template_url, params=params) 
                 bulb_resp = yield from resp.text()
+                print(bulb_resp)
                 return bulb_resp
-            
+                
             except Exception as ex:
                 # .close() on exception.
                 if resp!=None:
@@ -76,9 +85,45 @@ class BulbControl(object):
     
     def execute_control(self, control):
         try:
+            if control=="random":
+                x = random.uniform(0, 0.7) * 2**16
+                y = random.uniform(0, 0.8) * 2**16
+                index = random.randint(0, len(self.bulb_id_set)-1)
+                bulb_id = self.buld_id_set[index]
+                brightness = random.randint(50,255)
+                params = {"device": bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
+                self._loop.run_until_complete(self.get(params=params))
 
-            if control=="red":
+            elif control=="random-fixedBulb":
+                index = random.randint(0, len(self.color_profiles)-1)
+                key = self.color_proile_keys[index]
+                #print("Choosen color profile: ", key)
+                xy_coord = self.color_profiles[key]
+                (x, y) = xy_coord
+                x = int(x * 2**16)
+                y = int(y * 2**16)
+                brightness = random.randint(100,255)
+                params = {"device": self.bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
+                self._loop.run_until_complete(self.get(params=params))
+
+            elif control=="random-knownColors":
+                index = random.randint(0, len(self.color_profiles)-1)
+                key = self.color_proile_keys[index]
+                #print("Choosen color profile: ", key)
+                xy_coord = self.color_profiles[key]
+                (x, y) = xy_coord
+                x = int(x * 2**16)
+                y = int(y * 2**16)
+                index = random.randint(0, len(self.bulb_id_set)-1)
+                bulb_id = self.buld_id_set[index]
+                brightness = random.randint(100,255)
+                params = {"device": bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
+                self._loop.run_until_complete(self.get(params=params))
+
+            elif control=="red":
                 self._loop.run_until_complete(self.execute_color_red())
+            elif control=="green":
+                self._loop.run_until_complete(self.execute_color_green())
             elif control=="blue":
                 self._loop.run_until_complete(self.execute_color_blue())
             elif control=="white":
@@ -109,8 +154,8 @@ class BulbControl(object):
         params = {}
         params["device"] = self.bulb_id           # 0,3,8
         params["level"] = self.brightness                     # 0-255        brightness
-        params["colour_x"] = 1900              # 0-1931
-        params["colour_y"] = 1900              # 0-1931
+        params["colour_x"] = 6000              # 0-1931
+        params["colour_y"] = 52000              # 0-1931
         yield from self.get(params)
 
     @asyncio.coroutine                
@@ -147,6 +192,6 @@ class BulbControl(object):
 if __name__ == '__main__':
     bc = BulbControl()
     #bc.execute_controls("blue")
-    bc.execute_controls("red")
+    bc.execute_controls("random-fixedBulb")
 
     
