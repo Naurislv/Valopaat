@@ -81,7 +81,7 @@ def motion_detection(frame, avg):
 def main():
     """Run programs main loop."""
 
-    bulb_control = BulbControl()
+    bulb_control = BulbControl(CONFIG['bulb_ids'])
     hand_detector = HandDetector()
 
     # initialize the camera and grab a reference to the raw camera capture
@@ -108,7 +108,7 @@ def main():
         if text == "Moving":
             print('DETECTING HANDS', frame.shape)
             frame = hand_detector.run_with_boxes(frame, CONFIG['class_probability'])
-            bulb_control.execute_controls('random-knownColors')
+            bulb_control._execute_control('random-knownColors')
 
         # check to see if the frames should be displayed to screen
         if CONFIG["show_video"]:

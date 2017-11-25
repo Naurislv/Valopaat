@@ -13,8 +13,8 @@ import copy
 LOGLEVEL_BulbControl = logging.INFO
 
 class BulbControl(object):
-    def __init__(self, name="BulbControl"):
-        self.bulb_id            = 0
+    def __init__(self, bulb_ids, name="BulbControl"):
+        self.bulb_id            = 8
         self.brightness         = 150
         self.params             = {}
         self._loop              = None
@@ -23,6 +23,8 @@ class BulbControl(object):
         self._logger.setLevel(LOGLEVEL_BulbControl)
         self._logger.info("Initiating BulbControl API")
         self._initialize()
+
+        self.bulb_id_set = bulb_ids
 
     def _initialize(self):
         self.set_url_template()
@@ -55,7 +57,7 @@ class BulbControl(object):
                 x = random.uniform(0, 0.7) * 2**16
                 y = random.uniform(0, 0.8) * 2**16
                 index = random.randint(0, len(self.bulb_id_set)-1)
-                bulb_id = self.buld_id_set[index]
+                bulb_id = self.bulb_id_set[index]
                 brightness = random.randint(50,255)
                 params = {"device": bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
                 url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
@@ -83,7 +85,7 @@ class BulbControl(object):
                 x = int(x * 2**16)
                 y = int(y * 2**16)
                 index = random.randint(0, len(self.bulb_id_set)-1)
-                bulb_id = self.buld_id_set[index]
+                bulb_id = self.bulb_id_set[index]
                 brightness = random.randint(100,255)
                 params = {"device": bulb_id, "level":brightness, "colour_x":x, "colour_y":y}
                 url = self.template_url.format(params["device"], params["level"], params["colour_x"], params["colour_y"])
@@ -153,7 +155,7 @@ class BulbControl(object):
         self.execute_color_white()
 
 if __name__ == '__main__':
-    bc = BulbControl()
+    bc = BulbControl([0, 3, 8])
     bc._execute_control("random-fixedBulb")
     time.sleep(2)
     bc._execute_control("random-fixedBulb")
