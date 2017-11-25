@@ -108,8 +108,7 @@ def main():
         if text == "Moving":
             print('DETECTING HANDS', frame.shape)
             frame = hand_detector.run_with_boxes(frame, CONFIG['class_probability'])
-            bulb_control.set_bulb_id('random')
-            bulb_control.execute_controls('random')
+            bulb_control.execute_controls('random-knownColors')
 
         # check to see if the frames should be displayed to screen
         if CONFIG["show_video"]:

@@ -97,7 +97,7 @@ class BulbControl(object):
             elif control=="random-fixedBulb":
                 index = random.randint(0, len(self.color_profiles)-1)
                 key = self.color_proile_keys[index]
-                #print("Choosen color profile: ", key)
+                print("Choosen color profile: ", key)
                 xy_coord = self.color_profiles[key]
                 (x, y) = xy_coord
                 x = int(x * 2**16)
@@ -109,7 +109,7 @@ class BulbControl(object):
             elif control=="random-knownColors":
                 index = random.randint(0, len(self.color_profiles)-1)
                 key = self.color_proile_keys[index]
-                #print("Choosen color profile: ", key)
+                # print("Choosen color profile: ", key)
                 xy_coord = self.color_profiles[key]
                 (x, y) = xy_coord
                 x = int(x * 2**16)
@@ -192,6 +192,19 @@ class BulbControl(object):
 if __name__ == '__main__':
     bc = BulbControl()
     #bc.execute_controls("blue")
+
+    import time
+
     bc.execute_controls("random-fixedBulb")
+    time.sleep(2)
+
+    bc.execute_controls("random-fixedBulb")
+    time.sleep(2)
+
+    bc.execute_controls("random-fixedBulb")
+    time.sleep(2)
+
+    bc.execute_controls("random-fixedBulb")
+    time.sleep(2)
 
     
