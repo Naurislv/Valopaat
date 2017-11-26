@@ -51,7 +51,8 @@ Fingertip gesture recognition turned out to be challenging. The quality of lapto
 Creating a smart lighting system in a few days.
 
 ## What we learned
-Opencv is a good open source library for image processing.
+Opencv is a good open source library for image processing but does not solve hand gesture detection problem therefore is wise to use neural networks.
+
 Helvar sensors and API were fun to play with.
 
 ## What's next for valopaat
