@@ -1,4 +1,9 @@
 # Valopaat
+Youtube demo: https://www.youtube.com/watch?v=gRnZnipXp54&feature=youtu.be
+Devpost: https://devpost.com/software/valopaat-b12c4q
+https://hackjunction.com/
+
+
 ## Inspiration
 The original idea is to use the power of artificial intelligence in the field of image recognition to control lighting in various environments and for different scenarios.
 
