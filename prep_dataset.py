@@ -18,6 +18,7 @@ import json
 import glob
 import scipy.io
 import numpy as np
+import cv2
 
 _FLAGS = tf.app.flags
 _FLAGS.DEFINE_string('input_path', '', 'Path to .yaml logs')
@@ -31,8 +32,8 @@ LABEL_DICT =  {
 def create_tf_example(example, _file, counter):
 
     # Bosch
-    height = 360 # Image height
-    width = 640 # Image width
+    height = example['height'] # Image height
+    width = example['width'] # Image width
 
     filename = example['path'] # Filename of the image. Empty if image is not from file
     filename = filename.encode()
@@ -122,6 +123,10 @@ def read_annotations():
 
         example['boxes'] = bboxs
         example['path'] = im_file
+
+        img = cv2.imread(example['path'])
+        example['height'] = img.shape[0]
+        example['width'] = img.shape[1]
 
         yield example
 
