@@ -14,7 +14,12 @@ LOGLEVEL_BulbControl = logging.INFO
 
 class BulbControl(object):
     def __init__(self, bulb_ids, name="BulbControl"):
-        self.bulb_id            = 8
+
+        if not isinstance(bulb_ids, list) or not bulb_ids:
+            bulb_ids = [0]
+
+        self.bulb_id_set        = bulb_ids
+        self.bulb_id            = bulb_ids[0]
         self.brightness         = 150
         self.params             = {}
         self._loop              = None
@@ -24,7 +29,6 @@ class BulbControl(object):
         self._logger.info("Initiating BulbControl API")
         self._initialize()
 
-        self.bulb_id_set = bulb_ids
 
     def _initialize(self):
         self.set_url_template()
@@ -79,7 +83,7 @@ class BulbControl(object):
             elif control=="random-knownColors":
                 index = random.randint(0, len(self.color_profiles)-1)
                 key = self.color_proile_keys[index]
-                #print("Choosen color profile: ", key)
+                print("Choosen color profile: ", key)
                 xy_coord = self.color_profiles[key]
                 (x, y) = xy_coord
                 x = int(x * 2**16)

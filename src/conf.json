@@ -2,9 +2,15 @@
 	"show_video": true,
 	"draw_motion_rectangles": false,
 	"camera_warmup_time": 2.5,
-	"delta_thresh": 4,
+
 	"image_width": 600,
-	"min_area": 2000,
-	"class_probability": 0.8,
-	"bulb_ids": [0, 3, 8]
+
+	"delta_thresh": 3,
+	"min_area": 1500,
+	
+	"class_probability": 0.4,
+	
+	"bulb_ids": [0, 3, 8],
+
+	"mode": "normal"
 }
