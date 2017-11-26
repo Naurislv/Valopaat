@@ -6,6 +6,8 @@ import sys
 
 sys.path.append('./utils/')
 
+# pylint: disable=C0413
+
 # Dependecy imports
 import tensorflow as tf
 import numpy as np
@@ -22,10 +24,10 @@ class HandDetector(object):
     def __init__(self):
         """Load tensorflow model for pb."""
 
-        # fine_tune_model = ("../model/ssd_mobilenet_v1_coco_2017_11_17/"
-        #                    "frozen_inference_graph.pb")
         fine_tune_model = ("../model/ssd_mobilenet_v1_coco_2017_11_17/"
-                           "hand_inference_graph/frozen_inference_graph.pb")
+                           "frozen_inference_graph.pb")
+        # fine_tune_model = ("../model/ssd_mobilenet_v1_coco_2017_11_17/"
+        #                    "hand_inference_graph/frozen_inference_graph.pb")
 
         detection_graph = tf.Graph()
 
@@ -53,10 +55,10 @@ class HandDetector(object):
         self.detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
         self.num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 
-        # label_map = label_map_util.load_labelmap(
-        #     '../model/ssd_mobilenet_v1_coco_2017_11_17/mscoco_label_map.pbtxt')
         label_map = label_map_util.load_labelmap(
-            '../model/ssd_mobilenet_v1_coco_2017_11_17/hand_label.pbtxt')
+            '../model/ssd_mobilenet_v1_coco_2017_11_17/mscoco_label_map.pbtxt')
+        # label_map = label_map_util.load_labelmap(
+        #     '../model/ssd_mobilenet_v1_coco_2017_11_17/hand_label.pbtxt')
         categories = label_map_util.convert_label_map_to_categories(
             label_map, max_num_classes=1000, use_display_name=True)
         self.category_index = label_map_util.create_category_index(categories)

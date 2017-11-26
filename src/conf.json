@@ -8,9 +8,8 @@
 	"delta_thresh": 3,
 	"min_area": 1500,
 	
-	"class_probability": 0.4,
+	"class_probability": 0.5,
 	
 	"bulb_ids": [0, 3, 8],
-
 	"mode": "normal"
 }
